@@ -9,7 +9,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class TestLinearRegression(unittest.TestCase):
-    def test_ols(self):
+    def test_analytic(self):
         X, y, coef = make_regression(
             n_features=2, n_informative=2, coef=True, random_state=0
         )
@@ -20,6 +20,21 @@ class TestLinearRegression(unittest.TestCase):
         )
 
         m = LinearRegression(l2_reg=1).to(device)
+        m.fit(X, y, verbose=True)
+
+        self.assertTrue(torch.allclose(coef, m.beta, rtol=0.1))
+
+    def test_gradient_decent(self):
+        X, y, coef = make_regression(
+            n_features=2, n_informative=2, coef=True, random_state=0
+        )
+        X, y, coef = (
+            torch.tensor(X, dtype=torch.float32).to(device),
+            torch.tensor(y, dtype=torch.float32).to(device),
+            torch.tensor(coef, dtype=torch.float32).to(device),
+        )
+
+        m = LinearRegression(l1_reg=1).to(device)
         m.fit(X, y, verbose=True)
 
         self.assertTrue(torch.allclose(coef, m.beta, rtol=0.1))
