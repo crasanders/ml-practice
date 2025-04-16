@@ -17,7 +17,7 @@ class TestCategoricalNaiveBayes(unittest.TestCase):
         y1 = torch.zeros((n_samples,))
         y2 = torch.ones((n_samples,))
 
-        X = torch.vstack((X1, X2))
+        X = torch.bernoulli(torch.vstack((X1, X2)))
         y = torch.hstack((y1, y2))
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33)
