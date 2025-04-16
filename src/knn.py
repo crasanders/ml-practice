@@ -1,3 +1,4 @@
+import random
 from collections.abc import Callable
 
 import torch
@@ -40,3 +41,45 @@ class KNN:
         if self.train_X is None:
             raise RuntimeError("Cannot predict before the model has been trained!")
         return torch.tensor([self._predict(x) for x in X])
+
+
+class KMeans:
+    def __init__(
+        self,
+        k: int,
+        dist_fun: Callable[[torch.Tensor, torch.Tensor], torch.Tensor] = euclidean_dist,
+    ):
+        self.k = k
+        self.dist_fun = dist_fun
+        self.means = None
+
+    def _get_closest_mean(self, x: torch.Tensor) -> int:
+        smallest_dist = torch.inf
+        index = 0
+        for i, m in enumerate(self.means):
+            dist = self.dist_fun(x, m)
+            if dist < smallest_dist:
+                smallest_dist = dist
+                index = i
+        return index
+
+    def train(self, X: torch.Tensor, iterations: int = 100):
+        seeds = [x for x in X]
+        random.shuffle(seeds)
+        self.means = torch.stack(seeds[: self.k])
+        for i in range(iterations):
+            new_means = torch.zeros(self.means.size())
+            counts = [0] * self.k
+            for x in X:
+                index = self._get_closest_mean(x)
+                new_means[index] += x
+                counts[index] += 1
+            for i in range(self.k):
+                new_means[i] /= counts[i]
+            self.means = new_means
+
+    def predict(self, X: torch.Tensor) -> torch.Tensor:
+        if self.means is None:
+            raise RuntimeError("Cannot predict before the model has been trained!")
+        ans = [self._get_closest_mean(x) for x in X]
+        return torch.tensor(ans)
